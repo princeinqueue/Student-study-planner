@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudDrive — Student Task & Study Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1117;
+    --surface2: #161b22;
+    --surface3: #1c2330;
+    --border: #30363d;
+    --accent: #ff6b00;
+    --accent2: #ff9500;
+    --accent-glow: rgba(255,107,0,0.4);
+    --blue: #00c8ff;
+    --blue-glow: rgba(0,200,255,0.3);
+    --green: #39d353;
+    --red: #f85149;
+    --yellow: #d29922;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --card-bg: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(255,107,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,107,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top:0; z-index:100;
+    background: rgba(8,12,16,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items:center; justify-content:space-between;
+    height: 64px;
+  }
+
+  .logo {
+    display:flex; align-items:center; gap:12px;
+    font-family:'Orbitron',sans-serif; font-size:1.4rem; font-weight:900;
+    color: var(--accent); letter-spacing:2px;
+    text-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .logo svg { width:36px; height:36px; }
+
+  .header-info {
+    display:flex; align-items:center; gap:24px;
+    font-family:'Share Tech Mono', monospace; font-size:0.75rem; color:var(--text2);
+  }
+
+  .speed-indicator {
+    display:flex; align-items:center; gap:6px;
+    background: var(--surface2); border:1px solid var(--border);
+    padding: 4px 12px; border-radius:4px;
+  }
+
+  .speed-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display:flex; gap:0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    overflow-x:auto;
+  }
+
+  .tab-btn {
+    display:flex; align-items:center; gap:8px;
+    padding: 14px 22px;
+    background:none; border:none; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-size:0.95rem; font-weight:600;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space:nowrap; letter-spacing:0.5px;
+    position:relative;
+  }
+
+  .tab-btn:hover { color:var(--text); background:rgba(255,107,0,0.05); }
+
+  .tab-btn.active {
+    color: var(--accent); border-bottom-color: var(--accent);
+    text-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .tab-btn .tab-icon { font-size:1.1rem; }
+  .badge {
+    background:var(--accent); color:#000; font-size:0.65rem;
+    padding:1px 6px; border-radius:10px; font-weight:700;
+    min-width:18px; text-align:center;
+  }
+
+  /* ── MAIN CONTENT ── */
+  main { padding:2rem; max-width:1400px; margin:0 auto; position:relative; z-index:1; }
+
+  .tab-panel { display:none; animation: fadeIn 0.3s ease; }
+  .tab-panel.active { display:block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:1.5rem;
+  }
+
+  .section-title {
+    font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700;
+    color:var(--accent); letter-spacing:2px; text-transform:uppercase;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .section-title::before {
+    content:''; display:block; width:3px; height:20px;
+    background: var(--accent); box-shadow:0 0 8px var(--accent-glow);
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    position:relative; overflow:hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+  }
+
+  .card:hover { border-color: rgba(255,107,0,0.4); box-shadow:0 0 20px rgba(255,107,0,0.08); }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 9px 18px; border-radius:5px;
+    border:none; cursor:pointer;
+    font-family:'Rajdhani',sans-serif; font-size:0.9rem; font-weight:600;
+    letter-spacing:0.5px; transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent); color:#000;
+    box-shadow:0 0 0 transparent;
+  }
+  .btn-primary:hover { background:var(--accent2); box-shadow:0 0 16px var(--accent-glow); transform:translateY(-1px); }
+
+  .btn-outline {
+    background:transparent; color:var(--accent); border:1px solid var(--accent);
+  }
+  .btn-outline:hover { background:rgba(255,107,0,0.1); box-shadow:0 0 12px var(--accent-glow); }
+
+  .btn-ghost {
+    background:var(--surface2); color:var(--text2); border:1px solid var(--border);
+  }
+  .btn-ghost:hover { color:var(--text); border-color:var(--text3); }
+
+  .btn-danger { background:var(--red); color:#fff; }
+  .btn-danger:hover { box-shadow:0 0 12px rgba(248,81,73,0.4); }
+
+  .btn-sm { padding:5px 12px; font-size:0.8rem; }
+  .btn-xs { padding:3px 8px; font-size:0.75rem; }
+
+  /* ── INPUTS ── */
+  input, textarea, select {
+    background: var(--surface2); border:1px solid var(--border);
+    color: var(--text); font-family:'Rajdhani',sans-serif; font-size:0.95rem;
+    padding:9px 12px; border-radius:5px; width:100%;
+    outline:none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent); box-shadow:0 0 0 2px var(--accent-glow);
+  }
+  input::placeholder, textarea::placeholder { color:var(--text3); }
+  select option { background:var(--surface2); }
+  label { display:block; font-size:0.8rem; color:var(--text2); margin-bottom:4px; font-weight:600; letter-spacing:0.5px; }
+  .form-group { margin-bottom:1rem; }
+
+  /* ── STAT CARDS ── */
+  .stat-card {
+    background: var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:1.2rem;
+    text-align:center; position:relative; overflow:hidden;
+  }
+  .stat-card .stat-value {
+    font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:700;
+    color:var(--accent); display:block;
+  }
+  .stat-card .stat-label { font-size:0.75rem; color:var(--text2); letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
+  .stat-card .stat-icon { font-size:1.5rem; margin-bottom:8px; display:block; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { background:var(--surface2); border-radius:4px; height:8px; overflow:hidden; border:1px solid var(--border); }
+  .progress-bar { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 0.5s ease; position:relative; }
+  .progress-bar::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent); animation:shimmer 2s infinite; }
+  @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
+  /* ── TASK LIST ── */
+  .task-item {
+    background:var(--surface2); border:1px solid var(--border); border-radius:6px;
+    padding:12px 14px; margin-bottom:8px;
+    display:flex; align-items:center; gap:12px;
+    transition: all 0.2s; position:relative; overflow:hidden;
+  }
+  .task-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); }
+  .task-item.done { opacity:0.5; }
+  .task-item.done .task-text { text-decoration:line-through; color:var(--text3); }
+  .task-item.priority-high::before { background:var(--red); }
+  .task-item.priority-medium::before { background:var(--yellow); }
+  .task-item.priority-low::before { background:var(--green); }
+
+  .task-checkbox {
+    width:18px; height:18px; border-radius:4px; border:2px solid var(--border);
+    background:transparent; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s;
+  }
+  .task-checkbox.checked { background:var(--accent); border-color:var(--accent); }
+  .task-checkbox.checked::after { content:'✓'; color:#000; font-size:11px; font-weight:700; }
+
+  .task-text { flex:1; font-size:0.95rem; }
+  .task-meta { font-size:0.75rem; color:var(--text3); margin-top:2px; }
+  .task-actions { display:flex; gap:6px; opacity:0; transition:opacity 0.2s; }
+  .task-item:hover .task-actions { opacity:1; }
+
+  /* ── SUBJECT TAG ── */
+  .subject-tag {
+    display:inline-block; padding:2px 8px; border-radius:3px; font-size:0.7rem;
+    font-weight:600; letter-spacing:0.5px; text-transform:uppercase;
+  }
+
+  /* ── TIMETABLE ── */
+  .timetable { width:100%; border-collapse:collapse; }
+  .timetable th {
+    background:var(--surface3); padding:10px 14px;
+    font-family:'Orbitron',sans-serif; font-size:0.65rem; font-weight:600;
+    color:var(--accent); letter-spacing:1px; text-align:center; border:1px solid var(--border);
+  }
+  .timetable td { border:1px solid var(--border); padding:0; min-width:90px; height:52px; position:relative; }
+  .timetable .time-col { padding:10px; font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:var(--text3); text-align:right; background:var(--surface3); white-space:nowrap; }
+  .class-block {
+    position:absolute; inset:2px; border-radius:4px;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    font-size:0.7rem; font-weight:700; letter-spacing:0.5px;
+    cursor:default; overflow:hidden; text-overflow:ellipsis;
+    text-align:center; padding:2px;
+  }
+  .class-block.empty { background:transparent; }
+  .class-block:not(.empty):hover { filter:brightness(1.1); cursor:pointer; }
+
+  /* ── MARKS TABLE ── */
+  .marks-table { width:100%; border-collapse:collapse; }
+  .marks-table th { background:var(--surface3); padding:10px 14px; text-align:left; font-size:0.75rem; font-family:'Orbitron',sans-serif; font-weight:600; color:var(--text2); letter-spacing:1px; border-bottom:1px solid var(--border); }
+  .marks-table td { padding:12px 14px; border-bottom:1px solid rgba(48,54,61,0.5); font-size:0.9rem; }
+  .marks-table tr:hover td { background:rgba(255,107,0,0.03); }
+
+  .grade-badge {
+    display:inline-block; padding:2px 10px; border-radius:4px;
+    font-family:'Orbitron',sans-serif; font-size:0.7rem; font-weight:700;
+  }
+  .grade-a { background:rgba(57,211,83,0.15); color:var(--green); border:1px solid rgba(57,211,83,0.3); }
+  .grade-b { background:rgba(0,200,255,0.1); color:var(--blue); border:1px solid rgba(0,200,255,0.3); }
+  .grade-c { background:rgba(210,153,34,0.15); color:var(--yellow); border:1px solid rgba(210,153,34,0.3); }
+  .grade-f { background:rgba(248,81,73,0.15); color:var(--red); border:1px solid rgba(248,81,73,0.3); }
+
+  /* ── SPEEDOMETER (Dashboard) ── */
+  .speedometer-wrap { display:flex; justify-content:center; margin:1rem 0; }
+  .speedometer { position:relative; width:200px; height:110px; }
+  .speedometer svg { width:200px; height:110px; }
+
+  /* ── QUOTE CARD ── */
+  .quote-card {
+    background:linear-gradient(135deg,rgba(255,107,0,0.08),rgba(255,149,0,0.04));
+    border:1px solid rgba(255,107,0,0.3); border-radius:8px;
+    padding:1.5rem 2rem; text-align:center; position:relative;
+  }
+  .quote-card::before { content:'"'; font-family:'Orbitron',sans-serif; font-size:4rem; color:var(--accent); opacity:0.2; position:absolute; top:-10px; left:16px; line-height:1; }
+  .quote-text { font-size:1.05rem; font-style:italic; color:var(--text); line-height:1.6; }
+  .quote-author { font-size:0.8rem; color:var(--accent); margin-top:8px; font-weight:600; letter-spacing:1px; }
+
+  /* ── RPM GAUGE ── */
+  .mini-gauge { display:flex; flex-direction:column; align-items:center; }
+  .gauge-ring { width:80px; height:80px; border-radius:50%; border:4px solid var(--surface3); position:relative; }
+  .gauge-ring svg { position:absolute; inset:0; }
+
+  /* ── COUNTDOWN ── */
+  .countdown-wrap { display:flex; gap:8px; justify-content:center; }
+  .countdown-unit { text-align:center; }
+  .countdown-num { font-family:'Orbitron',sans-serif; font-size:2.5rem; font-weight:700; color:var(--accent); text-shadow:0 0 20px var(--accent-glow); display:block; }
+  .countdown-lbl { font-size:0.65rem; color:var(--text3); letter-spacing:2px; text-transform:uppercase; }
+  .countdown-sep { font-family:'Orbitron',sans-serif; font-size:2.5rem; color:var(--border); align-self:flex-start; padding-top:4px; }
+
+  /* ── FETCH TAB ── */
+  .api-result-card { background:var(--surface3); border:1px solid var(--border); border-radius:6px; padding:1rem; margin-top:8px; }
+  .api-result-card h4 { font-family:'Orbitron',sans-serif; font-size:0.75rem; color:var(--accent); margin-bottom:6px; letter-spacing:1px; }
+
+  /* ── POMODORO ── */
+  .pomodoro-ring { position:relative; width:160px; height:160px; margin:0 auto; }
+  .pomodoro-ring svg { width:160px; height:160px; transform:rotate(-90deg); }
+  .pomodoro-time {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:700; color:var(--text);
+  }
+  .pomodoro-time small { font-size:0.55rem; color:var(--text3); letter-spacing:2px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--surface); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+  /* ── FUEL BAR (side decorative) ── */
+  .fuel-bar { display:flex; align-items:center; gap:8px; font-size:0.75rem; color:var(--text3); }
+  .fuel-track { flex:1; height:6px; background:var(--surface3); border-radius:3px; border:1px solid var(--border); }
+  .fuel-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#39d353,#d29922,#f85149); transition:width 0.5s; }
+
+  /* ── NOTIFICATION ── */
+  #notification {
+    position:fixed; bottom:24px; right:24px; z-index:999;
+    background:var(--surface2); border:1px solid var(--accent); border-radius:8px;
+    padding:12px 20px; font-size:0.9rem; font-weight:600;
+    box-shadow:0 0 24px var(--accent-glow);
+    transform:translateY(100px); opacity:0;
+    transition: all 0.3s; display:flex; align-items:center; gap:10px;
+  }
+  #notification.show { transform:translateY(0); opacity:1; }
+
+  .tag-cs { background:rgba(0,200,255,0.15); color:var(--blue); }
+  .tag-math { background:rgba(57,211,83,0.15); color:var(--green); }
+  .tag-physics { background:rgba(248,81,73,0.15); color:var(--red); }
+  .tag-other { background:rgba(210,153,34,0.15); color:var(--yellow); }
+
+  @media(max-width:768px) {
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+    .tab-btn{padding:12px 14px; font-size:0.85rem;}
+    header{padding:0 1rem;}
+    main{padding:1rem;}
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; display:none; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:2rem; width:90%; max-width:480px; position:relative; }
+  .modal::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:10px 10px 0 0; }
+  .modal-title { font-family:'Orbitron',sans-serif; font-size:0.9rem; color:var(--accent); letter-spacing:2px; margin-bottom:1.5rem; }
+  .modal-close { position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text2); cursor:pointer; font-size:1.2rem; }
+</style>
+</head>
+<body>
+
+<!-- NOTIFICATION -->
+<div id="notification">🏁 <span id="notif-text"></span></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">ADD TASK</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="36" height="36" rx="4" fill="rgba(255,107,0,0.1)"/>
+      <path d="M4 24 L8 14 L14 14 L16 18 L20 18 L22 14 L28 14 L32 24 Z" fill="none" stroke="#ff6b00" stroke-width="1.5"/>
+      <circle cx="10" cy="26" r="3" fill="#ff6b00"/>
+      <circle cx="26" cy="26" r="3" fill="#ff6b00"/>
+      <path d="M4 20 L32 20" stroke="#ff6b00" stroke-width="1" stroke-dasharray="2,2"/>
+    </svg>
+    STUDDRIVE
+  </div>
+  <div class="header-info">
+    <div class="speed-indicator">
+      <div class="speed-dot"></div>
+      <span id="live-time">--:--:--</span>
+    </div>
+    <span id="live-date" style="color:var(--text3)">---</span>
+    <span style="color:var(--text3); font-size:0.7rem">2ND YEAR ENG.</span>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <button class="tab-btn active" onclick="switchTab('dashboard')" id="tab-dashboard">
+    <span class="tab-icon">⚡</span> DASHBOARD
+  </button>
+  <button class="tab-btn" onclick="switchTab('tasks')" id="tab-tasks">
+    <span class="tab-icon">🔧</span> TASK GARAGE
+    <span class="badge" id="task-badge">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('timetable')" id="tab-timetable">
+    <span class="tab-icon">🏎️</span> RACE SCHEDULE
+  </button>
+  <button class="tab-btn" onclick="switchTab('marks')" id="tab-marks">
+    <span class="tab-icon">📊</span> LAP TIMES
+  </button>
+  <button class="tab-btn" onclick="switchTab('resources')" id="tab-resources">
+    <span class="tab-icon">🌐</span> PIT STOP (API)
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ══════════════ TAB 1: DASHBOARD ══════════════ -->
+  <div class="tab-panel active" id="panel-dashboard">
+
+    <!-- Quote -->
+    <div class="quote-card" id="dash-quote" style="margin-bottom:1.5rem">
+      <div class="quote-text">Loading fuel for your mind...</div>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card">
+        <span class="stat-icon">✅</span>
+        <span class="stat-value" id="stat-done">0</span>
+        <div class="stat-label">Tasks Done</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-value" id="stat-pending">0</span>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📚</span>
+        <span class="stat-value" id="stat-subjects">0</span>
+        <div class="stat-label">Subjects</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🏆</span>
+        <span class="stat-value" id="stat-avg">--</span>
+        <div class="stat-label">Avg Marks %</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem">
+
+      <!-- Progress Engine -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1rem">ENGINE STATUS</div>
+        <div id="subject-progress"></div>
+      </div>
+
+      <!-- Pomodoro -->
+      <div class="card" style="text-align:center">
+        <div class="section-title" style="margin-bottom:1rem; justify-content:center">FOCUS TIMER</div>
+        <div class="pomodoro-ring" style="margin-bottom:1rem">
+          <svg viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,107,0,0.1)" stroke-width="8"/>
+            <circle id="pomo-circle" cx="80" cy="80" r="70" fill="none" stroke="#ff6b00" stroke-width="8"
+              stroke-dasharray="439.6" stroke-dashoffset="0" stroke-linecap="round"
+              style="filter:drop-shadow(0 0 6px rgba(255,107,0,0.6));"/>
+          </svg>
+          <div class="pomodoro-time">
+            <span id="pomo-display">25:00</span>
+            <small id="pomo-mode">FOCUS SESSION</small>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center; margin-bottom:8px;">
+          <button class="btn btn-primary" onclick="startPomo()">▶ START</button>
+          <button class="btn btn-ghost" onclick="resetPomo()">⏹ RESET</button>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center;">
+          <button class="btn btn-ghost btn-sm" onclick="setPomo(25,'FOCUS SESSION')">25m Focus</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPomo(5,'SHORT BREAK')">5m Break</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPomo(15,'LONG BREAK')">15m Break</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Tasks -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">UPCOMING DEADLINES</div>
+        <button class="btn btn-outline btn-sm" onclick="switchTab('tasks')">VIEW ALL →</button>
+      </div>
+      <div id="upcoming-tasks"><div style="color:var(--text3); font-size:0.9rem; text-align:center; padding:20px;">No tasks yet. Add from Task Garage.</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 2: TASK GARAGE ══════════════ -->
+  <div class="tab-panel" id="panel-tasks">
+    <div class="section-header">
+      <div class="section-title">TASK GARAGE</div>
+      <div style="display:flex; gap:8px;">
+        <select id="filter-subject" onchange="renderTasks()" style="width:140px; padding:6px 10px; font-size:0.8rem;">
+          <option value="all">All Subjects</option>
+        </select>
+        <select id="filter-priority" onchange="renderTasks()" style="width:130px; padding:6px 10px; font-size:0.8rem;">
+          <option value="all">All Priority</option>
+          <option value="high">🔴 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <button class="btn btn-primary" onclick="openAddTask()">＋ NEW TASK</button>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1rem;">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span style="font-size:0.8rem; color:var(--text3);">SORT:</span>
+        <button class="btn btn-ghost btn-sm" onclick="sortTasks('deadline')">By Deadline</button>
+        <button class="btn btn-ghost btn-sm" onclick="sortTasks('priority')">By Priority</button>
+        <button class="btn btn-ghost btn-sm" onclick="sortTasks('subject')">By Subject</button>
+      </div>
+      <div style="text-align:right;">
+        <button class="btn btn-ghost btn-sm" onclick="clearDone()">🗑 Clear Completed</button>
+      </div>
+    </div>
+
+    <div id="task-list">
+      <div style="color:var(--text3); text-align:center; padding:40px; font-size:0.9rem;">
+        🏎️ No tasks in the garage yet. Add your first task!
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 3: RACE SCHEDULE (Timetable) ══════════════ -->
+  <div class="tab-panel" id="panel-timetable">
+    <div class="section-header">
+      <div class="section-title">RACE SCHEDULE — WEEKLY</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddClass()">＋ ADD CLASS</button>
+    </div>
+    <div class="card" style="overflow-x:auto; padding:0;">
+      <table class="timetable" id="timetable"></table>
+    </div>
+    <div style="margin-top:1rem; display:flex; gap:16px; flex-wrap:wrap;" id="tt-legend"></div>
+  </div>
+
+  <!-- ══════════════ TAB 4: LAP TIMES (Marks) ══════════════ -->
+  <div class="tab-panel" id="panel-marks">
+    <div class="section-header">
+      <div class="section-title">LAP TIMES — MARKS TRACKER</div>
+      <button class="btn btn-primary btn-sm" onclick="openAddMarks()">＋ ADD MARKS</button>
+    </div>
+
+    <div class="grid-3" style="margin-bottom:1.5rem" id="marks-overview"></div>
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:1rem">DETAILED SCOREBOARD</div>
+      <div style="overflow-x:auto;">
+        <table class="marks-table" id="marks-table">
+          <thead>
+            <tr>
+              <th>SUBJECT</th><th>IA-1</th><th>IA-2</th><th>ASSIGNMENT</th><th>THEORY</th><th>TOTAL %</th><th>GRADE</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="marks-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TAB 5: PIT STOP — FETCH API ══════════════ -->
+  <div class="tab-panel" id="panel-resources">
+    <div class="section-header">
+      <div class="section-title">PIT STOP — LIVE RESOURCES</div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:1.5rem;">
+      <!-- Motivational Quotes API -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1rem">FUEL STATION — QUOTES</div>
+        <p style="color:var(--text2); font-size:0.85rem; margin-bottom:1rem;">Fetch motivational quotes to keep your engine running.</p>
+        <button class="btn btn-primary" onclick="fetchQuote()">⛽ FETCH QUOTE</button>
+        <div id="quote-result" style="margin-top:1rem;"></div>
+      </div>
+
+      <!-- Dog / Fun API (just for fun / demo) -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1rem">WEATHER API — STUDY CONDITION</div>
+        <p style="color:var(--text2); font-size:0.85rem; margin-bottom:1rem;">Check current weather condition and plan study accordingly.</p>
+        <div class="form-group">
+          <input id="city-input" placeholder="Enter city (e.g. Delhi)" />
+        </div>
+        <button class="btn btn-primary" onclick="fetchWeather()">🌤 CHECK WEATHER</button>
+        <div id="weather-result" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Open Library API -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1rem">LIBRARY — BOOK SEARCH</div>
+        <p style="color:var(--text2); font-size:0.85rem; margin-bottom:1rem;">Search Open Library for study books. Live data via Fetch API.</p>
+        <div class="form-group">
+          <input id="book-search" placeholder="Search book / subject..." />
+        </div>
+        <button class="btn btn-primary" onclick="searchBooks()">📚 SEARCH</button>
+        <div id="book-result" style="margin-top:1rem; max-height:260px; overflow-y:auto;"></div>
+      </div>
+
+      <!-- University API / Holiday check -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1rem">JOKE BREAK — CHILL PIT</div>
+        <p style="color:var(--text2); font-size:0.85rem; margin-bottom:1rem;">When you need a break — fetch a programming joke.</p>
+        <button class="btn btn-primary" onclick="fetchJoke()">😂 GET JOKE</button>
+        <div id="joke-result" style="margin-top:1rem;"></div>
+        <div style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1rem;">
+          <div class="section-title" style="margin-bottom:0.8rem; font-size:0.7rem;">EXAM COUNTDOWN</div>
+          <div class="form-group" style="display:flex; gap:8px;">
+            <input type="date" id="exam-date" />
+            <input type="text" id="exam-name" placeholder="Exam name" style="flex:1;" />
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="addCountdown()">＋ ADD</button>
+          <div id="countdowns-wrap" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ╔══════════════════════════════════════════════════════════╗
+// ║              STUDDRIVE — COMPLETE JAVASCRIPT             ║
+// ╚══════════════════════════════════════════════════════════╝
+
+// ── STATE ──
+let tasks = JSON.parse(localStorage.getItem('sd_tasks') || '[]');
+let marks = JSON.parse(localStorage.getItem('sd_marks') || '[]');
+let timetable = JSON.parse(localStorage.getItem('sd_timetable') || '{}');
+let countdowns = JSON.parse(localStorage.getItem('sd_countdowns') || '[]');
+let sortMode = 'deadline';
+let currentModalAction = null;
+let pomoInterval = null;
+let pomoSeconds = 25 * 60;
+let pomoTotal = 25 * 60;
+let pomoRunning = false;
+
+const SUBJECT_COLORS = ['#00c8ff','#ff6b00','#39d353','#d29922','#f85149','#bc8cff','#ff7eb6','#4fc3f7'];
+const QUOTES = [
+  {text:"Success is not final, failure is not fatal: it is the courage to continue that counts.", author:"Winston Churchill"},
+  {text:"The secret of getting ahead is getting started.", author:"Mark Twain"},
+  {text:"It always seems impossible until it's done.", author:"Nelson Mandela"},
+  {text:"Don't watch the clock; do what it does. Keep going.", author:"Sam Levenson"},
+  {text:"The expert in anything was once a beginner.", author:"Helen Hayes"},
+  {text:"Push yourself, because no one else is going to do it for you.", author:"Unknown"},
+  {text:"Great things never come from comfort zones.", author:"Unknown"},
+  {text:"Dream it. Wish it. Do it.", author:"Unknown"},
+];
+
+// ── SAVE ──
+function save() {
+  localStorage.setItem('sd_tasks', JSON.stringify(tasks));
+  localStorage.setItem('sd_marks', JSON.stringify(marks));
+  localStorage.setItem('sd_timetable', JSON.stringify(timetable));
+  localStorage.setItem('sd_countdowns', JSON.stringify(countdowns));
+}
+
+// ── NOTIFICATION ──
+function notify(msg, dur=3000) {
+  document.getElementById('notif-text').textContent = msg;
+  const n = document.getElementById('notification');
+  n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'), dur);
+}
+
+// ── LIVE TIME ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('live-time').textContent = now.toLocaleTimeString('en-IN',{hour12:false});
+  document.getElementById('live-date').textContent = now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── TAB SWITCHING ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='tasks') renderTasks();
+  if(id==='timetable') renderTimetable();
+  if(id==='marks') renderMarks();
+  if(id==='resources') renderCountdowns();
+}
+
+// ── MODAL ──
+function openModal(title, html, action) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+  currentModalAction = action;
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ════════════════════════════════════════
+// ── TAB 1: DASHBOARD ──
+// ════════════════════════════════════════
+function renderDashboard() {
+  // Quote
+  const q = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  document.querySelector('#dash-quote .quote-text').textContent = q.text;
+  const a = document.querySelector('#dash-quote .quote-author');
+  if(!a) {
+    const d = document.createElement('div'); d.className='quote-author';
+    d.textContent = '— '+q.author;
+    document.getElementById('dash-quote').appendChild(d);
+  } else { a.textContent = '— '+q.author; }
+
+  // Stats
+  const done = tasks.filter(t=>t.done).length;
+  const pending = tasks.filter(t=>!t.done).length;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('task-badge').textContent = pending;
+
+  const subs = [...new Set(marks.map(m=>m.subject))];
+  document.getElementById('stat-subjects').textContent = subs.length;
+
+  const avgPct = marks.length ? Math.round(marks.reduce((a,m)=>{
+    const total = (+m.ia1||0)+(+m.ia2||0)+(+m.assignment||0)+(+m.theory||0);
+    const max = 20+20+10+80;
+    return a + (total/max*100);
+  },0)/marks.length) : '--';
+  document.getElementById('stat-avg').textContent = avgPct==='--'?'--':avgPct+'%';
+
+  // Subject progress
+  const sp = document.getElementById('subject-progress');
+  if(!marks.length) { sp.innerHTML='<div style="color:var(--text3);font-size:0.85rem;text-align:center;padding:20px;">Add marks to see progress</div>'; }
+  else {
+    sp.innerHTML = marks.map((m,i)=>{
+      const pct = Math.min(100, Math.round(((+m.ia1||0)+(+m.ia2||0)+(+m.assignment||0)+(+m.theory||0))/(20+20+10+80)*100));
+      const c = SUBJECT_COLORS[i%SUBJECT_COLORS.length];
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:0.85rem;font-weight:600;">${m.subject}</span>
+          <span style="font-size:0.8rem;color:var(--text2);">${pct}%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}aa);"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Upcoming tasks
+  const upcoming = tasks.filter(t=>!t.done).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)).slice(0,4);
+  const ut = document.getElementById('upcoming-tasks');
+  if(!upcoming.length) {
+    ut.innerHTML='<div style="color:var(--text3);font-size:0.9rem;text-align:center;padding:20px;">✅ No pending tasks. Pit lane is clear!</div>';
+  } else {
+    ut.innerHTML = upcoming.map(t=>buildTaskHTML(t)).join('');
+  }
+
+  renderCountdowns();
+}
+
+// ════════════════════════════════════════
+// ── TAB 2: TASKS ──
+// ════════════════════════════════════════
+function openAddTask() {
+  const subs = getSubjects();
+  openModal('🔧 NEW TASK', `
+    <div class="form-group"><label>TASK NAME</label><input id="t-name" placeholder="e.g. Complete DSA assignment..."/></div>
+    <div class="form-group"><label>SUBJECT</label>
+      <select id="t-sub">
+        <option value="">-- Select Subject --</option>
+        ${subs.map(s=>`<option>${s}</option>`).join('')}
+        <option value="__new__">+ Add New Subject</option>
+      </select>
+    </div>
+    <div class="form-group" id="t-newsub-wrap" style="display:none;"><label>NEW SUBJECT NAME</label><input id="t-newsub" placeholder="e.g. Data Structures"/></div>
+    <div class="form-group"><label>PRIORITY</label>
+      <select id="t-priority">
+        <option value="medium">🟡 Medium</option>
+        <option value="high">🔴 High</option>
+        <option value="low">🟢 Low</option>
+      </select>
+    </div>
+    <div class="form-group"><label>DEADLINE</label><input type="date" id="t-deadline" /></div>
+    <div class="form-group"><label>NOTES</label><textarea id="t-notes" rows="2" placeholder="Additional notes..."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="submitTask()">🏁 ADD TASK</button>
+      <button class="btn btn-ghost" onclick="closeModal()">CANCEL</button>
+    </div>
+  `);
+  document.getElementById('t-sub').addEventListener('change', function() {
+    document.getElementById('t-newsub-wrap').style.display = this.value==='__new__'?'block':'none';
+  });
+}
+
+function submitTask() {
+  const name = document.getElementById('t-name').value.trim();
+  if(!name) { notify('⚠️ Task name cannot be empty!'); return; }
+  let sub = document.getElementById('t-sub').value;
+  if(sub==='__new__') sub = document.getElementById('t-newsub').value.trim() || 'General';
+  if(!sub) sub = 'General';
+  const task = {
+    id: Date.now(), name, subject: sub,
+    priority: document.getElementById('t-priority').value,
+    deadline: document.getElementById('t-deadline').value,
+    notes: document.getElementById('t-notes').value.trim(),
+    done: false, created: new Date().toISOString()
+  };
+  tasks.push(task); save(); closeModal();
+  renderTasks(); updateBadge();
+  notify('🏎️ Task added to garage!');
+}
+
+function renderTasks() {
+  updateBadge();
+  const filterSub = document.getElementById('filter-subject')?.value || 'all';
+  const filterPri = document.getElementById('filter-priority')?.value || 'all';
+  const subs = getSubjects();
+  const fs = document.getElementById('filter-subject');
+  if(fs) {
+    const cur = fs.value;
+    fs.innerHTML = '<option value="all">All Subjects</option>' + subs.map(s=>`<option${cur===s?' selected':''}>${s}</option>`).join('');
+  }
+
+  let filtered = [...tasks];
+  if(filterSub!=='all') filtered = filtered.filter(t=>t.subject===filterSub);
+  if(filterPri!=='all') filtered = filtered.filter(t=>t.priority===filterPri);
+
+  if(sortMode==='deadline') filtered.sort((a,b)=>new Date(a.deadline)-new Date(b.deadline));
+  else if(sortMode==='priority') { const o={high:0,medium:1,low:2}; filtered.sort((a,b)=>o[a.priority]-o[b.priority]); }
+  else filtered.sort((a,b)=>a.subject.localeCompare(b.subject));
+
+  const el = document.getElementById('task-list');
+  if(!filtered.length) {
+    el.innerHTML='<div style="color:var(--text3);text-align:center;padding:40px;font-size:0.9rem;">🏎️ No tasks match the filter. Change lanes!</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(t=>buildTaskHTML(t)).join('');
+}
+
+function buildTaskHTML(t) {
+  const colors = {high:'var(--red)',medium:'var(--yellow)',low:'var(--green)'};
+  const priEmoji = {high:'🔴',medium:'🟡',low:'🟢'};
+  const dl = t.deadline ? `<span>📅 ${t.deadline}</span>` : '';
+  const isOverdue = t.deadline && !t.done && new Date(t.deadline) < new Date();
+  return `<div class="task-item priority-${t.priority} ${t.done?'done':''}" id="task-${t.id}">
+    <div class="task-checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})"></div>
+    <div style="flex:1;min-width:0;">
+      <div class="task-text">${t.name}</div>
+      <div class="task-meta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+        <span class="subject-tag ${getSubjectClass(t.subject)}" style="font-size:0.65rem;">${t.subject}</span>
+        ${priEmoji[t.priority]} ${t.priority}
+        ${dl}
+        ${isOverdue?'<span style="color:var(--red);font-size:0.75rem;">⚠ OVERDUE</span>':''}
+        ${t.notes?`<span style="color:var(--text3);">📝 ${t.notes.substring(0,40)}${t.notes.length>40?'...':''}</span>`:''}
+      </div>
+    </div>
+    <div class="task-actions">
+      <button class="btn btn-ghost btn-xs" onclick="deleteTask(${t.id})">🗑</button>
+    </div>
+  </div>`;
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.done = !t.done; save();
+  renderTasks(); updateBadge();
+  notify(t.done ? '✅ Task completed! Well driven!' : '↩️ Task marked pending.');
+  if(document.getElementById('panel-dashboard').classList.contains('active')) renderDashboard();
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t=>t.id!==id); save(); renderTasks(); updateBadge();
+  notify('🗑️ Task removed from garage.');
+}
+
+function clearDone() {
+  tasks = tasks.filter(t=>!t.done); save(); renderTasks(); updateBadge();
+  notify('🧹 Completed tasks cleared!');
+}
+
+function sortTasks(mode) { sortMode=mode; renderTasks(); }
+function updateBadge() {
+  const p = tasks.filter(t=>!t.done).length;
+  document.getElementById('task-badge').textContent = p;
+}
+
+// ════════════════════════════════════════
+// ── TAB 3: TIMETABLE ──
+// ════════════════════════════════════════
+const DAYS = ['MON','TUE','WED','THU','FRI','SAT'];
+const TIMES = ['8:00','9:00','10:00','11:00','12:00','1:00','2:00','3:00','4:00','5:00'];
+
+function openAddClass() {
+  openModal('🏎️ ADD CLASS', `
+    <div class="form-group"><label>SUBJECT / CLASS NAME</label><input id="cl-name" placeholder="e.g. Data Structures"/></div>
+    <div class="form-group"><label>DAY</label>
+      <select id="cl-day">${DAYS.map(d=>`<option>${d}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>TIME SLOT</label>
+      <select id="cl-time">${TIMES.map(t=>`<option>${t}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>COLOR</label>
+      <select id="cl-color">
+        <option value="#00c8ff">🔵 Blue</option>
+        <option value="#ff6b00">🟠 Orange</option>
+        <option value="#39d353">🟢 Green</option>
+        <option value="#d29922">🟡 Yellow</option>
+        <option value="#f85149">🔴 Red</option>
+        <option value="#bc8cff">🟣 Purple</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="submitClass()">🏁 ADD</button>
+      <button class="btn btn-ghost" onclick="closeModal()">CANCEL</button>
+    </div>
+  `);
+}
+
+function submitClass() {
+  const name = document.getElementById('cl-name').value.trim();
+  if(!name){notify('⚠️ Enter class name!'); return;}
+  const day = document.getElementById('cl-day').value;
+  const time = document.getElementById('cl-time').value;
+  const color = document.getElementById('cl-color').value;
+  const key = `${day}_${time}`;
+  timetable[key] = {name, color};
+  save(); closeModal(); renderTimetable();
+  notify('📅 Class added to schedule!');
+}
+
+function renderTimetable() {
+  const table = document.getElementById('timetable');
+  let html = '<thead><tr><th>TIME</th>' + DAYS.map(d=>`<th>${d}</th>`).join('') + '</tr></thead><tbody>';
+  TIMES.forEach(time=>{
+    html += `<tr><td class="time-col">${time}</td>`;
+    DAYS.forEach(day=>{
+      const key = `${day}_${time}`;
+      const cls = timetable[key];
+      if(cls) {
+        const tc = isLight(cls.color)?'#000':'#fff';
+        html += `<td><div class="class-block" style="background:${cls.color};color:${tc};" onclick="removeClass('${key}')">
+          ${cls.name}<br><span style="font-size:0.6rem;opacity:0.7;">(click to remove)</span>
+        </div></td>`;
+      } else {
+        html += `<td><div class="class-block empty"></div></td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+
+  // Legend
+  const seen = {};
+  Object.values(timetable).forEach(c=>seen[c.name]=c.color);
+  document.getElementById('tt-legend').innerHTML = Object.entries(seen).map(([n,c])=>{
+    const tc = isLight(c)?'#000':'#fff';
+    return `<span style="background:${c};color:${tc};padding:4px 12px;border-radius:4px;font-size:0.75rem;font-weight:700;">${n}</span>`;
+  }).join('');
+}
+
+function removeClass(key) {
+  if(confirm('Remove this class from schedule?')){ delete timetable[key]; save(); renderTimetable(); }
+}
+
+function isLight(hex) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return (r*299+g*587+b*114)/1000 > 128;
+}
+
+// ════════════════════════════════════════
+// ── TAB 4: MARKS ──
+// ════════════════════════════════════════
+function openAddMarks() {
+  openModal('📊 ADD/UPDATE MARKS', `
+    <div class="form-group"><label>SUBJECT NAME</label><input id="m-sub" placeholder="e.g. Engineering Mathematics"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label>IA-1 (out of 20)</label><input type="number" id="m-ia1" min="0" max="20" placeholder="0–20"/></div>
+      <div class="form-group"><label>IA-2 (out of 20)</label><input type="number" id="m-ia2" min="0" max="20" placeholder="0–20"/></div>
+      <div class="form-group"><label>ASSIGNMENT (out of 10)</label><input type="number" id="m-assign" min="0" max="10" placeholder="0–10"/></div>
+      <div class="form-group"><label>THEORY EXAM (out of 80)</label><input type="number" id="m-theory" min="0" max="80" placeholder="0–80"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="submitMarks()">🏁 SAVE MARKS</button>
+      <button class="btn btn-ghost" onclick="closeModal()">CANCEL</button>
+    </div>
+  `);
+}
+
+function submitMarks() {
+  const sub = document.getElementById('m-sub').value.trim();
+  if(!sub){notify('⚠️ Enter subject name!'); return;}
+  const entry = {
+    subject: sub,
+    ia1: document.getElementById('m-ia1').value,
+    ia2: document.getElementById('m-ia2').value,
+    assignment: document.getElementById('m-assign').value,
+    theory: document.getElementById('m-theory').value,
+  };
+  const idx = marks.findIndex(m=>m.subject===sub);
+  if(idx>=0) marks[idx]=entry; else marks.push(entry);
+  save(); closeModal(); renderMarks();
+  notify('📊 Marks updated!');
+}
+
+function renderMarks() {
+  const overview = document.getElementById('marks-overview');
+  const tbody = document.getElementById('marks-tbody');
+  if(!marks.length){
+    overview.innerHTML='';
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;">No marks recorded yet. Add your first subject.</td></tr>`;
+    return;
+  }
+
+  overview.innerHTML = marks.slice(0,3).map((m,i)=>{
+    const total = (+m.ia1||0)+(+m.ia2||0)+(+m.assignment||0)+(+m.theory||0);
+    const max = 20+20+10+80;
+    const pct = Math.round(total/max*100);
+    const c = SUBJECT_COLORS[i%SUBJECT_COLORS.length];
+    return `<div class="stat-card">
+      <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px;letter-spacing:0.5px;">${m.subject}</div>
+      <div style="position:relative;width:80px;height:80px;margin:0 auto 8px;">
+        <svg viewBox="0 0 80 80" width="80" height="80" style="transform:rotate(-90deg)">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+          <circle cx="40" cy="40" r="34" fill="none" stroke="${c}" stroke-width="8"
+            stroke-dasharray="213.6" stroke-dashoffset="${213.6*(1-pct/100)}" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:${c};">${pct}%</div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text3);">${total}/${max}</div>
+    </div>`;
+  }).join('');
+
+  tbody.innerHTML = marks.map((m,i)=>{
+    const total = (+m.ia1||0)+(+m.ia2||0)+(+m.assignment||0)+(+m.theory||0);
+    const max = 20+20+10+80;
+    const pct = Math.round(total/max*100);
+    const grade = pct>=90?'A+':pct>=80?'A':pct>=70?'B':pct>=60?'C':pct>=40?'D':'F';
+    const gClass = grade.startsWith('A')?'grade-a':grade==='B'?'grade-b':grade==='C'||grade==='D'?'grade-c':'grade-f';
+    return `<tr>
+      <td><strong>${m.subject}</strong></td>
+      <td>${m.ia1||'--'}/20</td>
+      <td>${m.ia2||'--'}/20</td>
+      <td>${m.assignment||'--'}/10</td>
+      <td>${m.theory||'--'}/80</td>
+      <td>
+        <div style="margin-bottom:4px;font-weight:600;">${pct}%</div>
+        <div class="progress-wrap" style="width:100px;"><div class="progress-bar" style="width:${pct}%;"></div></div>
+      </td>
+      <td><span class="grade-badge ${gClass}">${grade}</span></td>
+      <td><button class="btn btn-danger btn-xs" onclick="deleteMark(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteMark(i) {
+  marks.splice(i,1); save(); renderMarks();
+  notify('🗑️ Subject removed.');
+}
+
+// ════════════════════════════════════════
+// ── TAB 5: FETCH API ──
+// ════════════════════════════════════════
+
+// QUOTES via Quotable API
+async function fetchQuote() {
+  const el = document.getElementById('quote-result');
+  el.innerHTML = `<div style="color:var(--text3);font-size:0.85rem;">⛽ Fetching fuel...</div>`;
+  try {
+    const res = await fetch('https://api.quotable.io/random?tags=inspirational|motivational|success');
+    const data = await res.json();
+    el.innerHTML = `<div class="api-result-card">
+      <h4>FETCHED FROM QUOTABLE.IO</h4>
+      <div style="font-style:italic;font-size:1rem;line-height:1.6;color:var(--text);">"${data.content}"</div>
+      <div style="color:var(--accent);font-size:0.8rem;margin-top:8px;font-weight:600;">— ${data.author}</div>
+    </div>`;
+    // Update dashboard quote
+    document.querySelector('#dash-quote .quote-text').textContent = data.content;
+  } catch(e) {
+    // fallback
+    const q = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+    el.innerHTML = `<div class="api-result-card">
+      <h4>LOCAL QUOTE (API UNAVAILABLE)</h4>
+      <div style="font-style:italic;">"${q.text}"</div>
+      <div style="color:var(--accent);font-size:0.8rem;margin-top:6px;">— ${q.author}</div>
+    </div>`;
+  }
+}
+
+// WEATHER via wttr.in
+async function fetchWeather() {
+  const city = document.getElementById('city-input').value.trim() || 'Delhi';
+  const el = document.getElementById('weather-result');
+  el.innerHTML = `<div style="color:var(--text3);font-size:0.85rem;">🌤 Checking conditions...</div>`;
+  try {
+    const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+    const data = await res.json();
+    const cur = data.current_condition[0];
+    const desc = cur.weatherDesc[0].value;
+    const temp = cur.temp_C;
+    const feels = cur.FeelsLikeC;
+    const humid = cur.humidity;
+    const advice = +temp < 15 ? "🧥 Cold — Great for focused studying indoors!" :
+                   +temp < 25 ? "☀️ Pleasant — Perfect study weather!" :
+                   "🥵 Hot — Stay hydrated, prefer AC room!";
+    el.innerHTML = `<div class="api-result-card">
+      <h4>WEATHER IN ${city.toUpperCase()} — wttr.in API</h4>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--blue);font-family:'Orbitron',sans-serif;">${temp}°C</div>
+      <div style="color:var(--text2);font-size:0.85rem;margin:4px 0;">${desc} • Feels like ${feels}°C • Humidity ${humid}%</div>
+      <div style="color:var(--accent);font-size:0.85rem;margin-top:8px;font-weight:600;">${advice}</div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="api-result-card" style="color:var(--red);">⚠️ Could not fetch weather. Check city name or network.</div>`;
+  }
+}
+
+// BOOKS via Open Library
+async function searchBooks() {
+  const q = document.getElementById('book-search').value.trim();
+  if(!q){notify('⚠️ Enter a search term!'); return;}
+  const el = document.getElementById('book-result');
+  el.innerHTML = `<div style="color:var(--text3);font-size:0.85rem;">📚 Searching library...</div>`;
+  try {
+    const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=6&fields=title,author_name,first_publish_year,subject`);
+    const data = await res.json();
+    if(!data.docs.length){ el.innerHTML='<div style="color:var(--text3);">No books found. Try a different query.</div>'; return; }
+    el.innerHTML = `<div style="color:var(--text3);font-size:0.75rem;margin-bottom:8px;">Found ${data.numFound} results — showing top ${data.docs.length}</div>` +
+      data.docs.map(b=>`
+        <div class="api-result-card" style="margin-bottom:6px;padding:10px 12px;">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--text);">${b.title}</div>
+          <div style="font-size:0.78rem;color:var(--text2);">${b.author_name?b.author_name.slice(0,2).join(', '):'Unknown Author'} ${b.first_publish_year?'• '+b.first_publish_year:''}</div>
+        </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="api-result-card" style="color:var(--red);">⚠️ Could not reach Open Library API.</div>`;
+  }
+}
+
+// JOKES via JokeAPI
+async function fetchJoke() {
+  const el = document.getElementById('joke-result');
+  el.innerHTML = `<div style="color:var(--text3);font-size:0.85rem;">😂 Loading...</div>`;
+  try {
+    const res = await fetch('https://v2.jokeapi.dev/joke/Programming?safe-mode&type=twopart');
+    const data = await res.json();
+    el.innerHTML = `<div class="api-result-card">
+      <h4>PROGRAMMING JOKE — JokeAPI</h4>
+      <div style="font-size:0.95rem;color:var(--text);margin-bottom:8px;"><strong>Q:</strong> ${data.setup}</div>
+      <div style="font-size:0.95rem;color:var(--accent);"><strong>A:</strong> ${data.delivery}</div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="api-result-card" style="color:var(--text3);">😅 API unavailable. Here's one: Why do Java developers wear glasses? Because they don't C#!</div>`;
+  }
+}
+
+// COUNTDOWNS
+function addCountdown() {
+  const d = document.getElementById('exam-date').value;
+  const n = document.getElementById('exam-name').value.trim();
+  if(!d||!n){notify('⚠️ Enter exam name and date!'); return;}
+  countdowns.push({name:n, date:d, id:Date.now()});
+  save(); renderCountdowns();
+  notify('⏱️ Exam countdown added!');
+}
+
+function renderCountdowns() {
+  const wrap = document.getElementById('countdowns-wrap');
+  if(!wrap) return;
+  if(!countdowns.length){ wrap.innerHTML='<div style="color:var(--text3);font-size:0.8rem;">No countdowns yet.</div>'; return; }
+  const now = new Date();
+  wrap.innerHTML = countdowns.map(c=>{
+    const diff = new Date(c.date) - now;
+    const days = Math.max(0,Math.ceil(diff/86400000));
+    const warn = days<=3?'color:var(--red)':days<=7?'color:var(--yellow)':'color:var(--green)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface3);border:1px solid var(--border);border-radius:5px;padding:8px 12px;margin-bottom:6px;">
+      <div>
+        <div style="font-weight:600;font-size:0.85rem;">${c.name}</div>
+        <div style="font-size:0.75rem;color:var(--text3);">${c.date}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;${warn}">${days}d</div>
+        <button class="btn btn-ghost btn-xs" onclick="removeCountdown(${c.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeCountdown(id) {
+  countdowns = countdowns.filter(c=>c.id!==id); save(); renderCountdowns();
+}
+
+// ════════════════════════════════════════
+// ── POMODORO ──
+// ════════════════════════════════════════
+function setPomo(mins, label) {
+  resetPomo();
+  pomoSeconds = mins*60; pomoTotal = mins*60;
+  document.getElementById('pomo-display').textContent = fmt(pomoSeconds);
+  document.getElementById('pomo-mode').textContent = label;
+}
+
+function startPomo() {
+  if(pomoRunning) { clearInterval(pomoInterval); pomoRunning=false; return; }
+  pomoRunning = true;
+  pomoInterval = setInterval(()=>{
+    if(pomoSeconds<=0) { clearInterval(pomoInterval); pomoRunning=false; notify('⏱️ Session complete! Take a break.'); return; }
+    pomoSeconds--;
+    document.getElementById('pomo-display').textContent = fmt(pomoSeconds);
+    const pct = pomoSeconds/pomoTotal;
+    const circ = 439.6;
+    document.getElementById('pomo-circle').style.strokeDashoffset = circ*(1-pct);
+  }, 1000);
+}
+
+function resetPomo() {
+  clearInterval(pomoInterval); pomoRunning=false;
+  document.getElementById('pomo-display').textContent = fmt(pomoSeconds=pomoTotal);
+  document.getElementById('pomo-circle').style.strokeDashoffset = 0;
+}
+
+function fmt(s){ return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+
+// ── HELPERS ──
+function getSubjects() { return [...new Set([...tasks.map(t=>t.subject), ...marks.map(m=>m.subject)].filter(Boolean))]; }
+function getSubjectClass(s) {
+  const lc = s.toLowerCase();
+  if(lc.includes('cs')||lc.includes('data')||lc.includes('program')||lc.includes('algo')) return 'tag-cs';
+  if(lc.includes('math')||lc.includes('calc')||lc.includes('stat')) return 'tag-math';
+  if(lc.includes('phy')||lc.includes('chem')||lc.includes('science')) return 'tag-physics';
+  return 'tag-other';
+}
+
+// ── INIT ──
+renderDashboard();
+renderTimetable();
+renderMarks();
+
+// Seed defaults if empty
+if(!Object.keys(timetable).length) {
+  [['MON','8:00','Data Structures','#00c8ff'],['MON','10:00','Engineering Math','#39d353'],
+   ['TUE','9:00','Physics','#f85149'],['WED','8:00','Data Structures','#00c8ff'],
+   ['WED','11:00','DBMS','#bc8cff'],['THU','10:00','Engineering Math','#39d353'],
+   ['FRI','8:00','DBMS','#bc8cff'],['FRI','2:00','Lab','#d29922'],
+   ['SAT','9:00','Physics Lab','#f85149']].forEach(([d,t,n,c])=>timetable[`${d}_${t}`]={name:n,color:c});
+  save(); renderTimetable();
+}
+
+if(!marks.length) {
+  marks = [
+    {subject:'Data Structures',ia1:17,ia2:16,assignment:9,theory:68},
+    {subject:'Engineering Math',ia1:15,ia2:18,assignment:8,theory:72},
+    {subject:'Physics',ia1:14,ia2:13,assignment:7,theory:55},
+  ]; save(); renderMarks();
+}
+
+if(!tasks.length) {
+  tasks = [
+    {id:1,name:'Complete DSA Assignment 3',subject:'Data Structures',priority:'high',deadline:'2025-12-15',notes:'Binary Trees chapter',done:false,created:new Date().toISOString()},
+    {id:2,name:'Solve 20 integration problems',subject:'Engineering Math',priority:'medium',deadline:'2025-12-18',notes:'',done:false,created:new Date().toISOString()},
+    {id:3,name:'Physics lab report submission',subject:'Physics',priority:'high',deadline:'2025-12-12',notes:'Wave optics experiment',done:false,created:new Date().toISOString()},
+  ]; save(); renderTasks();
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
